@@ -60,6 +60,11 @@ class KeyGenerator:
                                              elliptic_curve.p)
         return (kb, Yb)
 
+    def dump_keys(self, key, output_file):
+        with open(output_file, 'wb') as output:
+            pickle.dump(key, output, -1)
+            output.close()
+
     def generate_keys(self):
         alice_rsa_pubkey, alice_rsa_privkey = self.generate_rsa_keys()
         bob_rsa_pubkey, bob_rsa_privkey = self.generate_rsa_keys()
@@ -73,6 +78,11 @@ class KeyGenerator:
         alice_pubkey = PublicKey(ea, na, Ya)
         bob_privkey = PrivateKey(db, nb, kb)
         bob_pubkey = PublicKey(eb, nb, Yb)
+        self.dump_keys(alice_privkey, 'alice_privkey.pkl')
+        self.dump_keys(alice_pubkey, 'alice_pubkey.pkl')
+        self.dump_keys(bob_privkey, 'bob_privkey.pkl')
+        self.dump_keys(bob_pubkey, 'bob_pubkey.pkl')
+        del alice_pubkey, alice_privkey, bob_pubkey, bob_privkey
 
 
 class CoreFunction:
