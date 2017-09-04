@@ -1,6 +1,15 @@
 import random
 
 
+def pairwise(iterable):
+    ''' Mengubah list menjadi iterasi 2 elemen '''
+    if len(iterable) % 2:
+        iterable.append(0)
+    iterable = iter(iterable)
+    while True:
+        yield next(iterable), next(iterable)
+
+
 def to_digits(n, b):
     ''' Mengubah bilangan desimal n menjadi bilangan basis b '''
     digits = []
@@ -107,7 +116,7 @@ def find_primitive_root(p):
 
 
 def point_addition(a, b, P, Q, p):
-    ''' Penjumlahan dua titik pada kurva eliptis '''
+    ''' Penjumlahan dua titik P dan Q pada kurva eliptis G '''
     if (P == [0, 0]):
         R = Q
     elif (Q == [0, 0]):
@@ -128,7 +137,7 @@ def point_addition(a, b, P, Q, p):
 
 
 def point_multiplication(a, b, n, P, p):
-    ''' Multiplikasi titik pada kurva eliptis '''
+    ''' Multiplikasi titik P dengan n pada kurva eliptis G '''
     x = n
     Q = [0, 0]
     while (x > 1):
@@ -140,3 +149,17 @@ def point_multiplication(a, b, n, P, p):
             x = x / 2
     P = point_addition(a, b, P, Q, p)
     return P
+
+
+def point_compression(P):
+    P = [P[0], P[1] % 2]
+    return P
+
+
+def point_decompression(a, b, P, p):
+    z = pow(pow(P[0], 3) + (a * P[0]) + b, 1, p)
+    y = pow(z, (p + 1) // 4, p)
+    if (y % 2 == P[1]):
+        return [P[0], y]
+    else:
+        return [P[0], p - y]

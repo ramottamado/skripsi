@@ -86,5 +86,28 @@ class KeyGenerator:
 
 
 class CoreFunction:
-    def encrypt():
-        pass
+    def encrypt(self, bob_pubkey, alice_privkey, filename):
+        elliptic_curve = EllipticCurve()
+        plaintext = [ord(char) for char in filename]
+        '''
+        with open(filename, "rb") as inputfile:
+            byte = inputfile.read(20)
+            while byte:
+                plaintext.append(byte)
+                byte = inputfile.read(20)
+            inputfile.close()
+        '''
+        eb, nb, Yb = bob_pubkey.e, bob_pubkey.n, bob_pubkey.Y
+        ka = alice_privkey.k
+        K = libskripsi.point_multiplication(elliptic_curve.a,
+                                            elliptic_curve.b,
+                                            ka, Yb,
+                                            elliptic_curve.p)
+        #  plainbyte = [int.from_bytes(char, byteorder="little", signed=False)
+        #               for char in plaintext]
+        #  plaintuple = [char for char in libskripsi.pairwise(plainbyte)]
+        plaintuple = [char for char in libskripsi.pairwise(plaintext)]
+        cipher = [[pow(K[i]*x[i], eb, nb) for i in [0, 1]]
+                  for x in plaintuple]
+        ciphertext = [x for t in cipher for x in t]
+        print(ciphertext)

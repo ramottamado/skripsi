@@ -1,0 +1,10 @@
+bytestream 20 byte = 160 bit
+q 192 bit
+n 256 bit
+hasil 32 byte
+
+vs
+
+bytestream 20 byte = 160 bit
+n 1280 bit
+hasil 160 byte
