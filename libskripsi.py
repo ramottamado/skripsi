@@ -157,7 +157,7 @@ def point_compression(P):
 
 
 def point_decompression(a, b, P, p):
-    z = pow(pow(P[0], 3) + (a * P[0]) + b, 1, p)
+    z = (pow(P[0], 3, p) + (a * P[0]) + b) % p
     y = pow(z, (p + 1) // 4, p)
     if (y % 2 == P[1]):
         return [P[0], y]

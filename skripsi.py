@@ -7,12 +7,13 @@ import random
 
 class EllipticCurve:
     def __init__(self):
+        b = '5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b'
+        x = '6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296'
+        y = '4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5'
         self.a = -3
-        self.b = 2455155546008943817740293915197451784769108058161191238065
-        self.p = 6277101735386680763835789423207666416083908700390324961279
-        Gx = '188da80eb03090f67cbf20eb43a18800f4ff0afd82ff1012'
-        Gy = '07192b95ffc8da78631011ed6b24cdd573f977a11e794811'
-        self.G = [int(Gx, 16), int(Gy, 16)]
+        self.b = int(b, 16)
+        self.G = [int(x, 16), int(y, 16)]
+        self.p = pow(2, 256) - pow(2, 224) + pow(2, 192) + pow(2, 96) - 1
 
 
 class PrivateKey:
@@ -29,8 +30,14 @@ class PublicKey:
         self.Y = Y
 
 
+class Cipher:
+    def __init__(self, y1, y2):
+        self.Y = y1
+        self.m = y2
+
+
 class KeyGenerator:
-    def generate_rsa_keys(self, iNumbits=512):
+    def generate_rsa_keys(self, iNumbits=1024):
         while True:
             p = libskripsi.gen_random_prime(iNumbits)
             q = libskripsi.gen_random_prime(iNumbits)
@@ -42,72 +49,77 @@ class KeyGenerator:
                 break
         return ((e, n), (d, n))
 
-    def generate_alice_keys(self):
+    def generate_ecies_keys(self):
         elliptic_curve = EllipticCurve()
-        ka = random.randint(1, elliptic_curve.p - 1)
-        Ya = libskripsi.point_multiplication(elliptic_curve.a,
-                                             elliptic_curve.b,
-                                             ka, elliptic_curve.G,
-                                             elliptic_curve.p)
-        return (ka, Ya)
-
-    def generate_bob_keys(self):
-        elliptic_curve = EllipticCurve()
-        kb = random.randint(1, elliptic_curve.p - 1)
-        Yb = libskripsi.point_multiplication(elliptic_curve.a,
-                                             elliptic_curve.b,
-                                             kb, elliptic_curve.G,
-                                             elliptic_curve.p)
-        return (kb, Yb)
-
-    def dump_keys(self, key, output_file):
-        with open(output_file, 'wb') as output:
-            pickle.dump(key, output, -1)
-            output.close()
+        k = random.randint(1, elliptic_curve.p - 1)
+        Y = libskripsi.point_multiplication(elliptic_curve.a,
+                                            elliptic_curve.b,
+                                            k, elliptic_curve.G,
+                                            elliptic_curve.p)
+        return (k, Y)
 
     def generate_keys(self):
-        alice_rsa_pubkey, alice_rsa_privkey = self.generate_rsa_keys()
-        bob_rsa_pubkey, bob_rsa_privkey = self.generate_rsa_keys()
-        ea, na = alice_rsa_pubkey
-        da, na = alice_rsa_privkey
-        eb, nb = bob_rsa_pubkey
-        db, nb = bob_rsa_privkey
-        ka, Ya = self.generate_alice_keys()
-        kb, Yb = self.generate_bob_keys()
-        alice_privkey = PrivateKey(da, na, ka)
-        alice_pubkey = PublicKey(ea, na, Ya)
-        bob_privkey = PrivateKey(db, nb, kb)
-        bob_pubkey = PublicKey(eb, nb, Yb)
-        self.dump_keys(alice_privkey, 'alice_privkey.pkl')
-        self.dump_keys(alice_pubkey, 'alice_pubkey.pkl')
-        self.dump_keys(bob_privkey, 'bob_privkey.pkl')
-        self.dump_keys(bob_pubkey, 'bob_pubkey.pkl')
-        del alice_pubkey, alice_privkey, bob_pubkey, bob_privkey
+        dumper = CoreFunction()
+        rsa_pubkey, rsa_privkey = self.generate_rsa_keys()
+        e, n = rsa_pubkey
+        d, n = rsa_privkey
+        k, Y = self.generate_ecies_keys()
+        privkey = PrivateKey(d, n, k)
+        pubkey = PublicKey(e, n, Y)
+        dumper._dump(privkey, 'privkey.pkl')
+        dumper._dump(pubkey, 'pubkey.pkl')
+        del pubkey, privkey
 
 
 class CoreFunction:
-    def encrypt(self, bob_pubkey, alice_privkey, filename):
+    def _dump(self, _object, output_file):
+        with open(output_file, 'wb') as output:
+            pickle.dump(_object, output, -1)
+            output.close()
+
+    def _load(self, input_file):
+        with open(input_file, 'rb') as input:
+            _object = pickle.load(input)
+            input.close()
+            return _object
+
+    def encrypt(self, pubkey, filename):
         elliptic_curve = EllipticCurve()
         plaintext = [ord(char) for char in filename]
-        '''
-        with open(filename, "rb") as inputfile:
-            byte = inputfile.read(20)
-            while byte:
-                plaintext.append(byte)
-                byte = inputfile.read(20)
-            inputfile.close()
-        '''
-        eb, nb, Yb = bob_pubkey.e, bob_pubkey.n, bob_pubkey.Y
-        ka = alice_privkey.k
-        K = libskripsi.point_multiplication(elliptic_curve.a,
+        e, n, Y = pubkey.e, pubkey.n, pubkey.Y
+        k = random.randint(1, elliptic_curve.p)
+        kG = libskripsi.point_multiplication(elliptic_curve.a,
+                                             elliptic_curve.b,
+                                             k, elliptic_curve.G,
+                                             elliptic_curve.p)
+        kY = libskripsi.point_multiplication(elliptic_curve.a,
+                                             elliptic_curve.b,
+                                             k, Y,
+                                             elliptic_curve.p)
+        y1 = libskripsi.point_compression(kG)
+        y2 = [pow(kY[0] * char % elliptic_curve.p, e, n)
+              for char in plaintext]
+        #  print([y1, y2])
+        cipher = Cipher(y1, y2)
+        self._dump(cipher, 'cipher.pkl')
+
+    def decrypt(self, privkey, filename):
+        elliptic_curve = EllipticCurve()
+        cipher = self._load(filename)
+        d = privkey.d
+        n = privkey.n
+        k = privkey.k
+        y1 = cipher.Y
+        y2 = cipher.m
+        kG = libskripsi.point_decompression(elliptic_curve.a,
                                             elliptic_curve.b,
-                                            ka, Yb,
+                                            y1,
                                             elliptic_curve.p)
-        #  plainbyte = [int.from_bytes(char, byteorder="little", signed=False)
-        #               for char in plaintext]
-        #  plaintuple = [char for char in libskripsi.pairwise(plainbyte)]
-        plaintuple = [char for char in libskripsi.pairwise(plaintext)]
-        cipher = [[pow(K[i]*x[i], eb, nb) for i in [0, 1]]
-                  for x in plaintuple]
-        ciphertext = [x for t in cipher for x in t]
-        print(ciphertext)
+        kP = libskripsi.point_multiplication(elliptic_curve.a,
+                                             elliptic_curve.b,
+                                             k, kG, elliptic_curve.p)
+        kPinv = libskripsi.multiplicative_inverse(kP[0], elliptic_curve.p)
+        plaintext = [pow(char, d, n) * kPinv % elliptic_curve.p
+                     for char in y2]
+        plaintext = ''.join(map(lambda x: x, plaintext))
+        print(plaintext)

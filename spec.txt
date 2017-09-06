@@ -1,10 +1,10 @@
-bytestream 20 byte = 160 bit
-q 192 bit
-n 256 bit
-hasil 32 byte
+ord(char) for char in string
+q 256 bit
+n 1024 bit
+hasil array => pyobject
 
 vs
 
-bytestream 20 byte = 160 bit
-n 1280 bit
-hasil 160 byte
+ord(char) for char in string
+n 4096 bit
+hasil array => pyobject
