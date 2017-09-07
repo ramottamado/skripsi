@@ -141,7 +141,7 @@ class UserInterface:
         if arg == 2:
             _string = input("masukkan kata yang akan dienkripsi: ")
             pubkey = input("masukkan nama file kunci publik: ")
-            _cipher = input("masukkan nama file ciphertext: ")
+            _cipher = input("masukkan nama file ciphertext: ") + ".pkl"
             self.func.encrypt(pubkey, _string, _cipher)
             print("Success, cipher disimpan dengan nama: %s\n" % _cipher)
         if arg == 3:
