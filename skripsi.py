@@ -125,39 +125,3 @@ class CoreFunction:
                      for char in y2]
         plaintext = ''.join(map(lambda x: chr(x), plaintext))
         return plaintext
-
-
-class UserInterface:
-    def __init__(self):
-        self.keygen = KeyGenerator()
-        self.func = CoreFunction()
-
-    def main(self, arg):
-        if arg == 1:
-            priv = input("nama kunci privat: ") + ".pkl"
-            pub = input("nama kunci publik: ") + ".pkl"
-            self.keygen.generate_keys(priv, pub)
-            print("kunci publik: %s, kunci privat: %s\n" % (priv, pub))
-        if arg == 2:
-            _string = input("masukkan kata yang akan dienkripsi: ")
-            pubkey = input("masukkan nama file kunci publik: ")
-            _cipher = input("masukkan nama file ciphertext: ") + ".pkl"
-            self.func.encrypt(pubkey, _string, _cipher)
-            print("Success, cipher disimpan dengan nama: %s\n" % _cipher)
-        if arg == 3:
-            filename = input("masukkan nama file ciphertext: ")
-            privkey = input("masukkan nama file kunci privat: ")
-            _plaintext = self.func.decrypt(privkey, filename)
-            print("Plaintext adalah:\n%s\n" % _plaintext)
-
-
-if __name__ == "__main__":
-    ui = UserInterface()
-    running = 1
-    while running:
-        choice = input('Pilih penggunaan (1. Pembangkitan kunci,' +
-                       ' 2. Enkripsi, 3. Dekripsi, 4. Keluar): ')
-        if choice in ['1', '2', '3']:
-            ui.main(int(choice))
-        else:
-            running = 0
