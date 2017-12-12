@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import libskripsi
 import pickle
 import random
@@ -58,17 +56,14 @@ class KeyGenerator:
                                             elliptic_curve.p)
         return (k, Y)
 
-    def generate_keys(self, priv, pub):
-        dumper = CoreFunction()
+    def generate_keys(self):
         rsa_pubkey, rsa_privkey = self.generate_rsa_keys()
         e, n = rsa_pubkey
         d, n = rsa_privkey
         k, Y = self.generate_ecies_keys()
         privkey = PrivateKey(d, n, k)
         pubkey = PublicKey(e, n, Y)
-        dumper._dump(privkey, priv)
-        dumper._dump(pubkey, pub)
-        del pubkey, privkey
+        return (pubkey, privkey)
 
 
 class CoreFunction:
