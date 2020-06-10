@@ -9,6 +9,7 @@ from tkinter import messagebox
 
 keygen = skripsi.KeyGenerator()
 core = skripsi.CoreFunction()
+curve = skripsi.EllipticCurve()
 
 
 class UserInterface(ttk.Frame):
@@ -56,6 +57,10 @@ class Keygen(ttk.Frame):
         self.var_pub.set("")
         self.var_priv = StringVar(self)
         self.var_priv.set("")
+        self.var_keys_pub = StringVar(self)
+        self.var_keys_pub.set("")
+        self.var_keys_priv = StringVar(self)
+        self.var_keys_priv.set("")
         self.widget_init()
 
     def widget_init(self):
@@ -91,6 +96,15 @@ class Keygen(ttk.Frame):
             self.frame_btn_keygen, text="Bangkitkan Kunci",
             command=self.generate_keys)
         self.btn_keygen.grid(row=0, column=1, pady=20)
+        self.label_keys = ttk.Label(
+            self,
+            text="Kunci publik dan kunci privat akan muncul di bawah ini",
+            padding=(0, 12, 0, 0))
+        self.label_keys.grid(row=4, column=0, sticky=EW)
+        self.key_box = Text(
+            self, height=10)
+        self.key_box.grid(
+            row=5, column=0, columnspan=3, sticky=EW, pady=12)
 
     def select_pub(self):
         self.pubkey = filedialog.asksaveasfilename(
@@ -114,6 +128,19 @@ class Keygen(ttk.Frame):
     def generate_keys(self):
         if self.var_priv.get() and self.var_pub.get():
             keys = keygen.generate_keys()
+            P = keys[0].G
+            Q = keys[0].Y
+            n = keys[0].n
+            b = keys[0].e
+            j = keys[0].r
+            m = keys[1].k
+            p = keys[1].p
+            q = keys[1].q
+            a = keys[1].d
+            self.keytext = "Kunci publik: (%s, %s, %s, %s, %s)\n\nKunci privat: (%s, %s, %s, %s)" % (P, Q, n, b, j, m, p, q, a)
+            self.key_box.delete("1.0", END)
+            self.key_box.insert(
+                END, self.keytext)
             core._dump(keys[0], self.pubkey)
             core._dump(keys[1], self.privkey)
         else:
@@ -138,6 +165,8 @@ class Encryption(ttk.Frame):
         self.var_loc.set("")
         self.var_plaintext = StringVar(self)
         self.var_plaintext.set("")
+        self.var_ciphertext = StringVar(self)
+        self.var_ciphertext.set("")
         self.widget_init()
 
     def widget_init(self):
@@ -183,6 +212,15 @@ class Encryption(ttk.Frame):
             self.frame_btn_encrypt, text="Enkripsi Pesan",
             command=self.encrypt)
         self.btn_encrypt.grid(row=0, column=1, pady=20)
+        self.label_cipher = ttk.Label(
+            self,
+            text="Ciphertext akan muncul di bawah ini",
+            padding=(0, 12, 0, 0))
+        self.label_cipher.grid(row=6, column=0, sticky=EW)
+        self.ciphertext_box = Text(
+            self, height=10)
+        self.ciphertext_box.grid(
+            row=7, column=0, columnspan=3, sticky=EW, pady=12)
 
     def select_pub(self):
         self.pubkey = filedialog.askopenfilename(
@@ -208,10 +246,15 @@ class Encryption(ttk.Frame):
             self.plaintext_box.get("1.0", "end-1c") and
             self.var_loc.get() and self.var_pub.get()
         ):
-            core.encrypt(
+            cipher = core.encrypt(
                 self.var_pub.get(),
-                self.plaintext_box.get("1.0", "end-1c"),
-                self.var_loc.get())
+                self.plaintext_box.get("1.0", "end-1c"))
+            _cipherY, _cipherm = cipher.Y, cipher.m
+            _cipher = "Ciphertext: (%s, %s)" % (_cipherY, _cipherm)
+            self.ciphertext_box.delete("1.0", END)
+            self.ciphertext_box.insert(
+                END, _cipher)
+            core._dump(cipher, self.var_loc.get())
         else:
             messagebox.showerror(
                 "Error",
@@ -248,7 +291,7 @@ class Decryption(ttk.Frame):
         self.label_command.grid(
             row=5, column=0, sticky=EW)
         self.plaintext_box = Text(
-            self, height=5)
+            self, height=10)
         self.plaintext_box.grid(
             row=6, column=0, columnspan=3, sticky=EW, pady=12)
         self.label_priv = ttk.Label(
